@@ -14,7 +14,7 @@ def execute_action(agent, action_name, **kwargs):
     if action_name in action_registry:
        return action_registry[action_name](agent, **kwargs)
     else:
-        logger.error(f"Action {action_name} not found")
+        logger.error(f"Action {action_name} not found in {action_registry}")
         return None
     
 

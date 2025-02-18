@@ -221,6 +221,8 @@ class DiscordConnection(BaseConnection):
             return False
 
     def perform_action(self, action_name: str, kwargs) -> Any:
+        for key, value in kwargs.items():
+            logger.info(f" {key}: {value}")
         if action_name not in self.actions:
             raise KeyError(f"Unknown action: {action_name}")
 
@@ -233,15 +235,30 @@ class DiscordConnection(BaseConnection):
         if action_name == "read-messages":
             if "count" not in kwargs:
                 kwargs["count"] = self.config["message_read_count"]
+            if "channel_id" not in kwargs or "channel_id" == None:
+                kwargs["channel_id"] = self.config["channel_id"]
         elif action_name == "read-mentioned-messages":
             if "count" not in kwargs:
                 kwargs["count"] = self.config["message_read_count"]
+            if "channel_id" not in kwargs or "channel_id" == None:
+                kwargs["channel_id"] = self.config["channel_id"]
+        elif action_name == "post-message":
+            if "channel_id" not in kwargs or "channel_id" == None:
+                kwargs["channel_id"] = self.config["channel_id"]
+        elif action_name == "reply_to_message":
+            if "channel_id" not in kwargs or "channel_id" == None:
+                kwargs["channel_id"] = self.config["channel_id"]
         elif action_name == "react-to-message":
             if "emoji_name" not in kwargs:
                 kwargs["emoji_name"] = self.config["message_emoji_name"]
+            if "channel_id" not in kwargs or "channel_id" == None:
+                kwargs["channel_id"] = self.config["channel_id"]
         elif action_name == "list-channels":
             if "server_id" not in kwargs:
                 kwargs["server_id"] = self.config["server_id"]
+        
+        logger.info(f" *****Channel_ID****** {self.config["channel_id"]}")
+        logger.info(f" *****Server_ID****** {self.config["server_id"]}")
 
         # Call the appropriate method based on action name
         method_name = action_name.replace("-", "_")
@@ -277,6 +294,7 @@ class DiscordConnection(BaseConnection):
         return mentioned_messages
 
     def post_message(self, channel_id: str, message: str, **kwargs) -> dict:
+    
         """Send a new message"""
         logger.debug("Sending a new message")
 

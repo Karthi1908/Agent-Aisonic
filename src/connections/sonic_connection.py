@@ -212,6 +212,7 @@ class SonicConnection(BaseConnection):
                 return balance / (10 ** decimals)
             else:
                 balance = self._web3.eth.get_balance(address)
+                logger.info(f"\n✅ Successfully retreived the balance for the address: {address}. The balance is {balance}")
                 return self._web3.from_wei(balance, 'ether')
 
         except Exception as e:

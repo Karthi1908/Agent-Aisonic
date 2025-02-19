@@ -12,10 +12,8 @@ twitter_config.json
 agents/*.json
 
 # Include example agent and general config
-!agents/example.json
-!agents/general.json
-!agents/eternalai.json
-!agents/starter.json
+!agents/AiSonic.json
+
 
 # macOS
 .DS_Store

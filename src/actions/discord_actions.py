@@ -25,3 +25,31 @@ def post_message(agent, **kwargs):
 
         agent.logger.info("\n✅ Discord post done successfully!")
         return True
+    
+@register_action("reply-to-message")
+def reply_to_message(agent, **kwargs):
+    if "timeline_messages" in agent.state and agent.state["timeline_messages"] is not None and len(agent.state["timeline_messages"]) > 0:
+        message = agent.state["timeline_messages"].pop(0)
+        agent.logger.info(f"\n💬 message {message}...")
+        message_id = message.get('id')
+        if not message_id:
+            return
+
+        agent.logger.info(f"\n💬 GENERATING REPLY to: {message.get('text', '')[:50]}...")
+
+        base_prompt = REPLY_PROMPT.format(message_text =message.get('text') )
+        system_prompt = agent._construct_system_prompt()
+        reply_text = agent.prompt_llm(prompt=base_prompt, system_prompt=system_prompt)
+
+        if reply_text:
+            agent.logger.info(f"\n🚀 Posting reply: '{reply_text}'")
+            agent.connection_manager.perform_action(
+                connection_name="discord",
+                action_name="reply-to-message",
+                params=[message_id, reply_text]
+            )
+            agent.logger.info("✅ Reply posted successfully!")
+            return True
+    else:
+        agent.logger.info("\n👀 No messages found to reply to...")
+        return False

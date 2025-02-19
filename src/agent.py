@@ -55,6 +55,12 @@ class ZerePyAgent:
             if echochambers_config:
                 self.echochambers_message_interval = echochambers_config.get("message_interval", 60)
                 self.echochambers_history_count = echochambers_config.get("history_read_count", 50)
+            
+            # Extract Discord config
+            discord_config = next((config for config in agent_dict["config"] if config["name"] == "discord"), None)
+            if discord_config:
+                self.discord_channel_id = discord_config.get("channel_id", 60)
+                self.discord_read_count = discord_config.get("message_read_count", 1)
 
             self.is_llm_set = False
 
@@ -101,16 +107,6 @@ class ZerePyAgent:
                 prompt_parts.append("\nHere are some examples of your style (Please avoid repeating any of these):")
                 if self.examples:
                     prompt_parts.extend(f"- {example}" for example in self.examples)
-
-                if self.example_accounts:
-                    for example_account in self.example_accounts:
-                        tweets = self.connection_manager.perform_action(
-                            connection_name="twitter",
-                            action_name="get-latest-tweets",
-                            params=[example_account]
-                        )
-                        if tweets:
-                            prompt_parts.extend(f"- {tweet['text']}" for tweet in tweets)
 
             self._system_prompt = "\n".join(prompt_parts)
 
@@ -187,6 +183,15 @@ class ZerePyAgent:
                                 connection_name="twitter",
                                 action_name="read-timeline",
                                 params=[]
+                            )
+
+                    if "timeline_messages" not in self.state or self.state["timeline_messages"] is None or len(self.state["timeline_messages"]) == 0:
+                        if any("message" in task["name"] for task in self.tasks):
+                            logger.info("\n👀 READING TIMELINE")
+                            self.state["timeline_messages"] = self.connection_manager.perform_action(
+                                connection_name="discord",
+                                action_name="read-mentioned-messages",
+                                params=[self.discord_channel_id, self.discord_read_count]
                             )
 
                     if "room_info" not in self.state or self.state["room_info"] is None:

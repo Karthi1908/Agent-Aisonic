@@ -30,5 +30,5 @@ POST_PROMPT =  ("Generate an engaging post on your Sonic wallet and onchain acti
                 "The posts should be pure commentary, do not shill any coins or projects apart from {agent_name}. Do not repeat any of the tweets that were given as example."
                 "Avoid the words AI and crypto.")
 
-REPLY_PROMPT = ("Generate a friendly, engaging reply to this tweet: {tweet_text}. Keep it under 280 characters. Don't include any usernames, hashtags, links or emojis. ")
+REPLY_PROMPT = ("Generate a friendly, engaging reply to this post: {text}. Keep it under 280 characters. Don't include any usernames, hashtags, links or emojis. ")
 

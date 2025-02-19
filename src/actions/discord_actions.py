@@ -35,18 +35,18 @@ def reply_to_message(agent, **kwargs):
         if not message_id:
             return
 
-        agent.logger.info(f"\n💬 GENERATING REPLY to: {message.get('text', '')[:50]}...")
+        agent.logger.info(f"\n💬 GENERATING REPLY to: {message.get('message', '')[22:70]}...")
 
-        base_prompt = REPLY_PROMPT.format(message_text =message.get('text') )
+        base_prompt = REPLY_PROMPT.format(text=message.get('message')[22:] )
         system_prompt = agent._construct_system_prompt()
-        reply_text = agent.prompt_llm(prompt=base_prompt, system_prompt=system_prompt)
+        reply_message = agent.prompt_llm(prompt=base_prompt, system_prompt=system_prompt)
 
-        if reply_text:
-            agent.logger.info(f"\n🚀 Posting reply: '{reply_text}'")
+        if reply_message:
+            agent.logger.info(f"\n🚀 Posting reply: '{reply_message}'")
             agent.connection_manager.perform_action(
                 connection_name="discord",
                 action_name="reply-to-message",
-                params=[message_id, reply_text]
+                params=[channel_id, message_id, reply_message]
             )
             agent.logger.info("✅ Reply posted successfully!")
             return True

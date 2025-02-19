@@ -256,9 +256,6 @@ class DiscordConnection(BaseConnection):
         elif action_name == "list-channels":
             if "server_id" not in kwargs:
                 kwargs["server_id"] = self.config["server_id"]
-        
-        logger.info(f" *****Channel_ID****** {self.config["channel_id"]}")
-        logger.info(f" *****Server_ID****** {self.config["server_id"]}")
 
         # Call the appropriate method based on action name
         method_name = action_name.replace("-", "_")

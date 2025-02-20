@@ -38,7 +38,10 @@
       "name": "sonic",
       "network": "testnet"
     },
-
+    {
+      "name": "allora",
+      "chain_slug": "testnet"
+    },
     {
       "name": "farcaster",
       "timeline_read_count": 1,
@@ -53,9 +56,9 @@
     }
   ],
   "tasks": [
-    {"name": "get-sonic-balance", "weight": 0.5},
-    {"name": "post-message","channel_id": "1337747758920237118", "count": 1, "weight": 1},
-    {"name": "reply-to-message","channel_id": "1337747758920237118", "count": 1, "weight": 1}
+   
+    {"name": "get-inference", "weight": 0.5}
+  
     
   ],
   "use_time_based_weights": false,

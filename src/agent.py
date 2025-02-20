@@ -13,6 +13,7 @@ import src.actions.discord_actions
 import src.actions.echochamber_actions
 import src.actions.solana_actions
 import src.actions.sonic_actions
+import src.actions.allora_actions
 from datetime import datetime
 
 REQUIRED_FIELDS = ["name", "bio", "traits", "examples", "loop_delay", "config", "tasks"]

@@ -82,6 +82,7 @@ class AlloraConnection(BaseConnection):
         """Get inference from Allora Network for a specific topic"""
         try:
             response = self._make_request('get_inference_by_topic_id', topic_id)
+            logger.info(f"Retrieved {response.inference_data.network_inference_normalized}")
             return {
                 "topic_id": topic_id,
                 "inference": response.inference_data.network_inference_normalized

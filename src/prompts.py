@@ -32,3 +32,15 @@ POST_PROMPT =  ("Generate an engaging post on your Sonic wallet and onchain acti
 
 REPLY_PROMPT = ("Generate a friendly, engaging reply to this post: {text}. Keep it under 280 characters. Don't include any usernames, hashtags, links or emojis. ")
 
+#WRAPCAST prompts
+POST_CAST_PROMPT =  ("Generate an engaging post on your Sonic and other tokens on the SONIC blockchain."
+                "Don't include any hashtags, links or emojis. Keep it under 280 characters."
+                "The posts should be pure commentary, and compare the original casts market prediction with allora values." 
+                "Always promote {agent_name}. Do not repeat any of the casts that were given as example."
+                "Avoid the words AI and crypto.")
+
+REPLY_CAST_PROMPT = ("Generate a friendly, engaging reply to this post: {text}." 
+                "The posts should be pure commentary, and compare the original casts market prediction with allora values."
+                "Keep it under 280 characters. Don't include any usernames, hashtags, links or emojis. ")
+
+

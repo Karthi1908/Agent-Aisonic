@@ -14,6 +14,7 @@ import src.actions.echochamber_actions
 import src.actions.solana_actions
 import src.actions.sonic_actions
 import src.actions.allora_actions
+import src.actions.farcaster_actions
 from datetime import datetime
 
 REQUIRED_FIELDS = ["name", "bio", "traits", "examples", "loop_delay", "config", "tasks"]
@@ -62,6 +63,14 @@ class ZerePyAgent:
             if discord_config:
                 self.discord_channel_id = discord_config.get("channel_id", 60)
                 self.discord_read_count = discord_config.get("message_read_count", 1)
+
+            # Extract Farcaster config
+            farcaster_config = next((config for config in agent_dict["config"] if config["name"] == "farcaster"), None)
+            if farcaster_config:
+                self.farcaster_cast_interval = farcaster_config.get("cast_interval", 60)
+                self.farcaster_read_count = farcaster_config.get("timeline_read_count", 10)
+                logger.info(f"⏳ farcaster: {self.farcaster_read_count}  casts to be counted..")
+
 
             self.is_llm_set = False
 
@@ -193,6 +202,15 @@ class ZerePyAgent:
                                 connection_name="discord",
                                 action_name="read-mentioned-messages",
                                 params=[self.discord_channel_id, self.discord_read_count]
+                            )
+
+                    if "timeline_casts" not in self.state or self.state["timeline_casts"] is None or len(self.state["timeline_casts"]) == 0:
+                        if any("cast" in task["name"] for task in self.tasks):
+                            logger.info("\n👀 READING FARCASTER TIMELINE")
+                            self.state["timeline_casts"] = self.connection_manager.perform_action(
+                                connection_name="farcaster",
+                                action_name="read-timeline",
+                                params=[]
                             )
 
                     if "room_info" not in self.state or self.state["room_info"] is None:

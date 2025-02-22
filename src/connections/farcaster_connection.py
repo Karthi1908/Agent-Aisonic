@@ -205,8 +205,9 @@ class FarcasterConnection(BaseConnection):
             raise ValueError(f"Invalid parameters: {', '.join(errors)}")
 
         # Add config parameters if not provided
-        if action_name == "read-timeline" and "count" not in kwargs:
-            kwargs["count"] = self.config["timeline_read_count"]
+        if action_name == "read-timeline" and "limit" not in kwargs:
+            kwargs["limit"] = self.config["timeline_read_count"]
+            
 
         # Call the appropriate method based on action name
         method_name = action_name.replace('-', '_')
@@ -227,7 +228,7 @@ class FarcasterConnection(BaseConnection):
         return self._client.post_cast(text, embeds, None, channel_key)
 
 
-    def read_timeline(self, cursor: Optional[int] = None, limit: Optional[int] = 100) -> IterableCastsResult:
+    def read_timeline(self, cursor: Optional[Any] = 0, limit: Optional[int] =10) -> IterableCastsResult:
         """Read all recent casts"""
         logger.debug(f"Reading timeline, cursor: {cursor}, limit: {limit}")
         return self._client.get_recent_casts(cursor, limit)

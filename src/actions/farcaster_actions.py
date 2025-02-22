@@ -45,7 +45,7 @@ def reply_to_cast(agent, **kwargs):
             agent.logger.info(f"\n🚀 Posting reply: '{reply_message}'")
             agent.connection_manager.perform_action(
                 connection_name="farcaster",
-                action_name="reply-to-message",
+                action_name="reply-to-cast",
                 params=[cast_id, reply_message]
             )
             agent.logger.info("✅ Reply posted successfully!")

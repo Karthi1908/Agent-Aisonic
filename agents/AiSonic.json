@@ -32,12 +32,7 @@
       "name": "openai",
       "model": "gpt-3.5-turbo"
     },
-    {
-      "name": "twitter",
-      "timeline_read_count": 1,
-      "own_tweet_replies_count":2,
-      "tweet_interval": 5400
-    },    
+    
     {
       "name": "sonic",
       "network": "testnet"
@@ -64,9 +59,8 @@
     {"name": "reply_to_message", "weight": 0.5},
     {"name": "post_message", "weight": 0.5},
     {"name": "get-inference", "weight": 0.5},
-    {"name": "post-cast", "weight": 0.5},
-    {"name": "reply-to-cast", "weight": 0.5},
-    {"name": "post_tweet", "weight": 0.5}      
+    {"name": "post-cast", "weight": 0.5}
+           
   ],
   "use_time_based_weights": false,
   "time_based_multipliers": {

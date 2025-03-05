@@ -6,7 +6,7 @@ from typing import Dict, Any, Optional
 from dotenv import load_dotenv, set_key
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
-from src.constants.abi import ERC20_ABI
+from src.constants.abi import ERC20_ABI, PREDICTIONS_ABI
 from src.connections.base_connection import BaseConnection, Action, ActionParameter
 from src.constants.networks import SONIC_NETWORKS
 
@@ -35,6 +35,9 @@ class SonicConnection(BaseConnection):
         super().__init__(config)
         self._initialize_web3()
         self.ERC20_ABI = ERC20_ABI
+        self.PREDICTIONS_ABI = PREDICTIONS_ABI
+        self.PREDICTIONS_CONTRACT = "0xdb4b532e95c33386653Fdb4bf16033c0B45B0725"
+        self.PREDICTIONS_REWARD ="0xd5864DB2dd442949280E37b9b2Ef9a29037D79A7"
         self.NATIVE_TOKEN = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
         self.aggregator_api = "https://aggregator-api.kyberswap.com/sonic/api/v1"
 
@@ -132,6 +135,30 @@ class SonicConnection(BaseConnection):
                 ],
                 description="Send $S or tokens"
             ),
+            "register-user": Action(
+                name="register-user",
+                parameters=[
+                    ActionParameter("discord_id", True, int, "Discord Id"),
+                    ActionParameter("user_address", True, str, "User address")                    
+                ],
+                description="Register Discord users eth address for Prediction"
+            ),
+            "submit-prediction": Action(
+                name="submit-prediction",
+                parameters=[
+                    
+                    ActionParameter("user_address", True, str, "User address"),
+                    ActionParameter("prediction", True, int, "Prediction")                   
+                ],
+                description="Submit price predictions"
+            ),
+            "award-winners": Action(
+                name="award-winners",
+                parameters=[
+                    ActionParameter("actual_price", True, int, "Actual Price")                   
+                ],
+                description="Select and Award winners"
+            ),
             "swap": Action(
                 name="swap",
                 parameters=[
@@ -218,7 +245,108 @@ class SonicConnection(BaseConnection):
         except Exception as e:
             logger.error(f"Failed to get balance: {e}")
             raise
+        
+    def register_user(self, discord_id: int, user_address: str) -> str:
+        """Register Soinc wallet address of the Discord User"""
+        try:
+            private_key = os.getenv('SONIC_PRIVATE_KEY')
+            chain_id = self._web3.eth.chain_id
+            if not private_key:
+                raise SonicConnectionError("No wallet configured")
+            account = self._web3.eth.account.from_key(private_key)
+            
+            contract = self._web3.eth.contract(
+                    address=Web3.to_checksum_address(self.PREDICTIONS_CONTRACT),
+                    abi=self.PREDICTIONS_ABI
+                )
+            tx = contract.functions.registerUser(
+                    discord_id,
+                    Web3.to_checksum_address(user_address)
+                ).build_transaction({
+                    'from': account.address,
+                    'nonce': self._web3.eth.get_transaction_count(account.address),
+                    'gasPrice': self._web3.eth.gas_price,
+                    'chainId': chain_id
+                })
+            signed = account.sign_transaction(tx)
+            tx_hash = self._web3.eth.send_raw_transaction(signed.rawTransaction)
 
+            # Log and return explorer link immediately
+            tx_link = self._get_explorer_link(tx_hash.hex())
+            logger.info(f"\n✅ Successfully registered the discord user with id {discord_id} and address: {user_address}. The transaction is {tx_link}")
+            return f"⛓️ Register User transaction sent: {tx_link}"
+
+        except Exception as e:
+            logger.error(f"Failed to register user: {e}")
+            raise
+
+    def submit_prediction(self, user_address: str,prediction: int) -> str:
+        """Submit Crypto Price predictions"""
+        try:
+            private_key = os.getenv('SONIC_PRIVATE_KEY')
+            chain_id = self._web3.eth.chain_id
+            if not private_key:
+                raise SonicConnectionError("No wallet configured")
+            account = self._web3.eth.account.from_key(private_key)
+            
+            contract = self._web3.eth.contract(
+                    address=Web3.to_checksum_address(self.PREDICTIONS_CONTRACT),
+                    abi=self.PREDICTIONS_ABI
+                )
+            tx = contract.functions.submitPrediction(
+                    Web3.to_checksum_address(user_address),
+                    prediction
+                ).build_transaction({
+                    'from': account.address,
+                    'nonce': self._web3.eth.get_transaction_count(account.address),
+                    'gasPrice': self._web3.eth.gas_price,
+                    'chainId': chain_id
+                })
+            signed = account.sign_transaction(tx)
+            tx_hash = self._web3.eth.send_raw_transaction(signed.rawTransaction)
+
+            # Log and return explorer link immediately
+            tx_link = self._get_explorer_link(tx_hash.hex())
+            logger.info(f"\n✅ User {user_address} Successfully submitted Price prediction as {prediction}. The transaction is {tx_link}")
+            return f"⛓️ Price Prediction transaction sent: {tx_link}"
+
+        except Exception as e:
+            logger.error(f"Failed to submit predictions: {e}")
+            raise
+
+    def award_winners(self, actual_price: int) -> str:
+        """Submit Crypto Price predictions"""
+        try:
+            private_key = os.getenv('SONIC_PRIVATE_KEY')
+            chain_id = self._web3.eth.chain_id
+            if not private_key:
+                raise SonicConnectionError("No wallet configured")
+            account = self._web3.eth.account.from_key(private_key)
+            
+            contract = self._web3.eth.contract(
+                    address=Web3.to_checksum_address(self.PREDICTIONS_CONTRACT),
+                    abi=self.PREDICTIONS_ABI
+                )
+            tx = contract.functions.awardWinners(
+                    actual_price
+                ).build_transaction({
+                    'from': account.address,
+                    'nonce': self._web3.eth.get_transaction_count(account.address),
+                    'gasPrice': self._web3.eth.gas_price,
+                    'chainId': chain_id
+                })
+            signed = account.sign_transaction(tx)
+            tx_hash = self._web3.eth.send_raw_transaction(signed.rawTransaction)
+
+            # Log and return explorer link immediately
+            tx_link = self._get_explorer_link(tx_hash.hex())
+            logger.info(f"\n✅ Awards Sent to winners. The transaction is {tx_link}")
+            return f"⛓️ Price Prediction transaction sent: {tx_link}"
+
+        except Exception as e:
+            logger.error(f"Failed to submit predictions: {e}")
+            raise
+    
     def transfer(self, to_address: str, amount: float, token_address: Optional[str] = None) -> str:
         """Transfer $S or tokens to an address"""
         try:

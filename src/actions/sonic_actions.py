@@ -1,9 +1,12 @@
 import logging
 import os
 from dotenv import load_dotenv
+from src.helpers import print_h_bar
 from src.action_handler import register_action
 
 logger = logging.getLogger("actions.sonic_actions")
+channel_id = "1337747758920237118"
+topic_id=1
 
 # Note: These action handlers are currently simple passthroughs to the sonic_connection methods.
 # They serve as hook points where hackathon participants can add custom logic, validation,
@@ -74,6 +77,101 @@ def send_sonic(agent, **kwargs):
 
     except Exception as e:
         logger.error(f"Failed to send $S: {str(e)}")
+        return None
+    
+@register_action("register-user")
+def register_user(agent, **kwargs):
+    """Register Discord user sonic address to send the reward tokens
+    """
+    try:
+        discord_id = kwargs.get("discord_id")
+        user_address = float(kwargs.get("user_address"))
+
+        # Direct passthrough to connection method - add your logic before/after this call!
+        agent.connection_manager.connections["sonic"].register_user(
+            discord_id=discord_id,
+            user_address=user_address
+        )
+        return
+
+    except Exception as e:
+        logger.error(f"Failed to register user: {str(e)}")
+        return None
+    
+@register_action("submit-prediction")
+def submit_prediction(agent, **kwargs):
+    """Submit Eth Price predictions
+    """
+    try:
+        prediction = kwargs.get("prediction")
+        user_address = float(kwargs.get("user_address"))
+
+        # Direct passthrough to connection method - add your logic before/after this call!
+        agent.connection_manager.connections["sonic"].submit_prediction(
+            
+            user_address=user_address,
+            prediction=prediction
+        )
+        return
+
+    except Exception as e:
+        logger.error(f"Failed to submit predictions: {str(e)}")
+        return None
+    
+@register_action("award-winners")
+def award_winners(agent, **kwargs):
+    """Submit Eth Price predictions
+    """
+    agent.logger.info("\n📝 GETTING NEW INFERENCE")
+    print_h_bar()
+    response= agent.connection_manager.perform_action(
+                connection_name="allora",
+                action_name="get-inference",
+                params=[topic_id]
+            )
+
+    agent.logger.info(f"'{response}'")
+    print_h_bar()
+    agent.logger.info("\n📝 GENERATING NEW DISCORD POST")
+    print_h_bar()
+
+    #prompt = POST_PROMPT.format(agent_name = agent.name)
+    prompt = response["inference"]
+    actual_price= round(float(prompt))
+    #post_text = agent.prompt_llm(prompt)
+    post_text = "Current Ethereum value is " + prompt
+
+    if post_text:
+        agent.logger.info("\n🚀 Posting to discord:")
+        agent.logger.info(f"'{post_text}'")
+        agent.connection_manager.perform_action(
+                connection_name="discord",
+                action_name="post-message",
+                params=[channel_id, post_text]
+            )
+
+        agent.logger.info("\n✅ Discord post done successfully!")
+        return True
+    try:
+        actual_price= round(float(prompt))
+
+        # Direct passthrough to connection method - add your logic before/after this call!
+        post_text = agent.connection_manager.connections["sonic"].award_winners(
+            actual_price=actual_price
+        )
+
+        if post_text:
+            agent.logger.info("\n🚀 Posting to discord:")
+            agent.logger.info(f"'{post_text}'")
+            agent.connection_manager.perform_action(
+                connection_name="discord",
+                action_name="post-message",
+                params=[channel_id, post_text]
+            )
+        return
+
+    except Exception as e:
+        logger.error(f"Failed to submit predictions: {str(e)}")
         return None
 
 @register_action("send-sonic-token")

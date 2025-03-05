@@ -56,10 +56,10 @@
   ],
   "tasks": [
     {"name": "get-sonic-balance", "weight": 0.5},
-    {"name": "reply_to_message", "weight": 0.5},
-    {"name": "post_message", "weight": 0.5},
-    {"name": "get-inference", "weight": 0.5},
-    {"name": "post-cast", "weight": 0.5}
+    {"name": "register_user", "weight": 0.5},
+    {"name": "reply-to-message", "weight": 0.5},
+    {"name": "post-message", "weight": 0.5},
+    {"name": "get-inference", "weight": 0.5}
            
   ],
   "use_time_based_weights": false,

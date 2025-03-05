@@ -36,7 +36,7 @@ class SonicConnection(BaseConnection):
         self._initialize_web3()
         self.ERC20_ABI = ERC20_ABI
         self.PREDICTIONS_ABI = PREDICTIONS_ABI
-        self.PREDICTIONS_CONTRACT = "0xdb4b532e95c33386653Fdb4bf16033c0B45B0725"
+        self.PREDICTIONS_CONTRACT = "0xBbF358B2FdaCdeD47AE2ca6a495De23ED848eb37"
         self.PREDICTIONS_REWARD ="0xd5864DB2dd442949280E37b9b2Ef9a29037D79A7"
         self.NATIVE_TOKEN = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
         self.aggregator_api = "https://aggregator-api.kyberswap.com/sonic/api/v1"

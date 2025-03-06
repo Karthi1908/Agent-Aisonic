@@ -24,6 +24,7 @@ contract EthPricePrediction is Ownable {
     uint256 public predictionWindowDuration = 45 minutes;
     uint256 public predictionInterval = 1 hours;
     uint256 public lastPredictionTime;
+    uint256 public startTime;
     uint256 public currentPredictionRound;
 
     event UserRegistered(address indexed userAddress, uint256 discordId);
@@ -37,10 +38,11 @@ contract EthPricePrediction is Ownable {
     constructor(address tokenAddress) Ownable(msg.sender) {
         rewardToken = IERC20(tokenAddress);
         lastPredictionTime = block.timestamp;
+        startTime =block.timestamp ;
         currentPredictionRound = 1;
     }
 
-    function registerUser(uint256 _discordId, address _userAddress) public {
+    function registerUser(uint256 _discordId,address _userAddress) public {
         require(!users[_userAddress].registered, "User already registered");
         users[_userAddress] = User({
             prediction: 0,
@@ -53,8 +55,7 @@ contract EthPricePrediction is Ownable {
     function submitPrediction(address _userAddress, uint256 _prediction) public onlyOwner {
         require(users[_userAddress].registered, "User not registered");
         require(
-            block.timestamp >= lastPredictionTime &&
-                block.timestamp <= lastPredictionTime + predictionWindowDuration,
+        ((block.timestamp - startTime) % 60 minutes) < predictionWindowDuration, 
             "Prediction window is closed"
         );
         users[_userAddress].prediction = _prediction;

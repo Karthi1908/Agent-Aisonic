@@ -344,7 +344,7 @@ class SonicConnection(BaseConnection):
             return f"⛓️ Price Prediction transaction sent: {tx_link}"
 
         except Exception as e:
-            logger.error(f"Failed to submit predictions: {e}")
+            logger.error(f"Failed to Award winners: {e}")
             raise
     
     def transfer(self, to_address: str, amount: float, token_address: Optional[str] = None) -> str:

@@ -43,4 +43,14 @@ REPLY_CAST_PROMPT = ("Generate a friendly, engaging reply to this post: {text}."
                 "The posts should be pure commentary, and compare the original casts market prediction with allora values."
                 "Keep it under 280 characters. Don't include any usernames, hashtags, links or emojis. ")
 
-
+PARSING_PROMPT = ("You are an intelligent assistant tasked with parsing social media messages."
+                  "The message might contain: "
+                  "1. A wallet address registration (e.g., 'register my wallet 0x1234567890abcdef1234567890abcdef12345678') "
+                  "2. A price prediction (e.g., 'predict BTC 50000') "
+                  "3. Both commands in any order "
+                  "4. Neither (just a mention or random text) "
+                  "Extract the parameters for each command present in the message."
+                  "For wallet registration: extract the wallet address (starts with '0x', 40 hex chars). "
+                  "For price prediction: extract the asset (e.g., BTC) and price (numeric value). "
+                  "Return the result as a JSON object with two keys: 'registrations' and 'predictions', each containing a list of parameter dictionaries. "
+                  "If no command is found, return empty lists. Message: {text}")

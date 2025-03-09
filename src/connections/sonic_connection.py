@@ -36,8 +36,8 @@ class SonicConnection(BaseConnection):
         self._initialize_web3()
         self.ERC20_ABI = ERC20_ABI
         self.PREDICTIONS_ABI = PREDICTIONS_ABI
-        self.PREDICTIONS_CONTRACT = "0xBbF358B2FdaCdeD47AE2ca6a495De23ED848eb37"
-        self.PREDICTIONS_REWARD ="0xd5864DB2dd442949280E37b9b2Ef9a29037D79A7"
+        self.PREDICTIONS_CONTRACT = "0x434cfba9ca6aCb39dbDD83E6b38C110d09eDd9AD"
+        self.PREDICTIONS_REWARD ="0x8277E604a7F3eb168A0D9eA82Edf88EA02a28F6E"
         self.NATIVE_TOKEN = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
         self.aggregator_api = "https://aggregator-api.kyberswap.com/sonic/api/v1"
 
@@ -138,17 +138,16 @@ class SonicConnection(BaseConnection):
             "register-user": Action(
                 name="register-user",
                 parameters=[
-                    ActionParameter("discord_id", True, int, "Discord Id"),
-                    ActionParameter("user_address", True, str, "User address")                    
+                    ActionParameter("user_address", True, str, "User address"),
+                    ActionParameter("discord_id", True, str, "Discord Id")                                    
                 ],
                 description="Register Discord users eth address for Prediction"
             ),
             "submit-prediction": Action(
                 name="submit-prediction",
                 parameters=[
-                    
-                    ActionParameter("user_address", True, str, "User address"),
-                    ActionParameter("prediction", True, int, "Prediction")                   
+                    ActionParameter("prediction", True, int, "Prediction") ,
+                    ActionParameter("discord_id", True, str, "Discord Id")                                      
                 ],
                 description="Submit price predictions"
             ),
@@ -246,7 +245,7 @@ class SonicConnection(BaseConnection):
             logger.error(f"Failed to get balance: {e}")
             raise
         
-    def register_user(self, discord_id: int, user_address: str) -> str:
+    def register_user(self, user_address: str, discord_id: str) -> str:
         """Register Soinc wallet address of the Discord User"""
         try:
             private_key = os.getenv('SONIC_PRIVATE_KEY')
@@ -260,8 +259,8 @@ class SonicConnection(BaseConnection):
                     abi=self.PREDICTIONS_ABI
                 )
             tx = contract.functions.registerUser(
-                    discord_id,
-                    Web3.to_checksum_address(user_address)
+                    Web3.to_checksum_address(user_address),
+                    discord_id
                 ).build_transaction({
                     'from': account.address,
                     'nonce': self._web3.eth.get_transaction_count(account.address),
@@ -280,7 +279,7 @@ class SonicConnection(BaseConnection):
             logger.error(f"Failed to register user: {e}")
             raise
 
-    def submit_prediction(self, user_address: str,prediction: int) -> str:
+    def submit_prediction(self, prediction: int, discord_id: str) -> str:
         """Submit Crypto Price predictions"""
         try:
             private_key = os.getenv('SONIC_PRIVATE_KEY')
@@ -294,8 +293,8 @@ class SonicConnection(BaseConnection):
                     abi=self.PREDICTIONS_ABI
                 )
             tx = contract.functions.submitPrediction(
-                    Web3.to_checksum_address(user_address),
-                    prediction
+                    prediction,
+                    discord_id
                 ).build_transaction({
                     'from': account.address,
                     'nonce': self._web3.eth.get_transaction_count(account.address),
@@ -307,8 +306,8 @@ class SonicConnection(BaseConnection):
 
             # Log and return explorer link immediately
             tx_link = self._get_explorer_link(tx_hash.hex())
-            logger.info(f"\n✅ User {user_address} Successfully submitted Price prediction as {prediction}. The transaction is {tx_link}")
-            return f"⛓️ Price Prediction transaction sent: {tx_link}"
+            logger.info(f"\n✅ User {discord_id} Successfully submitted Price prediction as {prediction}. The transaction is {tx_link}")
+            return f"⛓️ User {discord_id} Successfully submitted Price prediction as {prediction}: {tx_link}"
 
         except Exception as e:
             logger.error(f"Failed to submit predictions: {e}")
@@ -341,7 +340,7 @@ class SonicConnection(BaseConnection):
             # Log and return explorer link immediately
             tx_link = self._get_explorer_link(tx_hash.hex())
             logger.info(f"\n✅ Awards Sent to winners. The transaction is {tx_link}")
-            return f"⛓️ Price Prediction transaction sent: {tx_link}"
+            return f"⛓️ Prediction round completed. Awards Sent to winners. The transaction is  {tx_link}"
 
         except Exception as e:
             logger.error(f"Failed to Award winners: {e}")

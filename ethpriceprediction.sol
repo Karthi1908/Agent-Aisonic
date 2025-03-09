@@ -1,168 +1,163 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./PredictionToken.sol";
 
-contract EthPricePrediction is Ownable {
-    struct User {
-        uint256 prediction;
-        uint256 discordId;
-        bool registered;
-    }
-
+contract ETHPricePrediction is Ownable {
+    PredictionToken public rewardToken;
+    
     struct Prediction {
-        uint256 predictionValue;
-        address userAddress;
+        uint256 predictedPrice;
+        uint256 timestamp;
+        string discordId;
     }
-
-    mapping(address => User) public users;
-    mapping(uint256 => Prediction) public predictions;
-    uint256[] public predictionValues;
-    IERC20 public rewardToken;
-    uint256 public predictionWindowDuration = 45 minutes;
-    uint256 public predictionInterval = 1 hours;
-    uint256 public lastPredictionTime;
-    uint256 public startTime;
-    uint256 public currentPredictionRound;
-
-    event UserRegistered(address indexed userAddress, uint256 discordId);
-    event PredictionSubmitted(
-        address indexed userAddress,
-        uint256 prediction
-    );
-    event WinnerAwarded(address indexed winnerAddress, uint256 amount);
-    event PredictionResult(uint256 actualPrice, uint256 round);
-
-    constructor(address tokenAddress) Ownable(msg.sender) {
-        rewardToken = IERC20(tokenAddress);
-        lastPredictionTime = block.timestamp;
-        startTime =block.timestamp ;
-        currentPredictionRound = 1;
+    
+    struct Round {
+        uint256 startTime;
+        uint256 actualPrice;
+        bool isRevealed;
+        address winner;
+        uint256 winningDifference;
+        address[] participants;
     }
-
-    function registerUser(uint256 _discordId,address _userAddress) public {
-        require(!users[_userAddress].registered, "User already registered");
-        users[_userAddress] = User({
-            prediction: 0,
-            discordId: _discordId,
-            registered: true
+    
+    mapping(address => string) public addressToDiscord; // ETH address to Discord ID
+    mapping(string => address) public discordToAddress; // Discord ID to ETH address (new)
+    mapping(uint256 => mapping(address => Prediction)) public predictions;
+    mapping(uint256 => Round) public rounds;
+    
+    uint256 public constant PREDICTION_DURATION = 10 minutes;
+    uint256 public constant WAIT_DURATION = 5 minutes;
+    uint256 public constant ROUND_INTERVAL = 15 minutes;
+    uint256 public constant REWARD_AMOUNT = 100; // 100 tokens
+    
+    uint256 public currentRound;
+    uint256 public lastRoundStart;
+    
+    event UserRegistered(address indexed user, string discordId);
+    event PredictionSubmitted(uint256 indexed round, address indexed user, uint256 predictedPrice);
+    event RoundStarted(uint256 indexed round, uint256 startTime);
+    event PriceRevealed(uint256 indexed round, uint256 actualPrice, address winner);
+    
+    constructor(address _rewardToken) Ownable(msg.sender) {
+        require(_rewardToken != address(0), "Invalid token address");
+        rewardToken = PredictionToken(_rewardToken);
+        currentRound = 1;
+        lastRoundStart = block.timestamp;
+        rounds[currentRound].startTime = lastRoundStart;
+        emit RoundStarted(currentRound, lastRoundStart);
+    }
+    
+    function registerUser(address _user, string calldata _discordId) external onlyOwner {
+        require(_user != address(0), "Invalid address");
+        require(bytes(_discordId).length > 0, "Discord ID cannot be empty");
+        require(bytes(addressToDiscord[_user]).length == 0, "Address already registered");
+        require(discordToAddress[_discordId] == address(0), "Discord ID already registered");
+        
+        addressToDiscord[_user] = _discordId;
+        discordToAddress[_discordId] = _user;
+        emit UserRegistered(_user, _discordId);
+    }
+    
+    // Modified: Only owner can submit predictions, uses Discord ID to derive address
+    function submitPrediction(uint256 _predictedPrice, string calldata _discordId) external onlyOwner {
+        address participant = discordToAddress[_discordId];
+        require(participant != address(0), "Discord ID not registered");
+        require(block.timestamp < lastRoundStart + PREDICTION_DURATION, "Prediction period ended");
+        require(predictions[currentRound][participant].predictedPrice == 0, "Already predicted this round");
+        
+        predictions[currentRound][participant] = Prediction({
+            predictedPrice: _predictedPrice,
+            timestamp: block.timestamp,
+            discordId: _discordId
         });
-        emit UserRegistered(_userAddress, _discordId);
-    }
-
-    function submitPrediction(address _userAddress, uint256 _prediction) public onlyOwner {
-        require(users[_userAddress].registered, "User not registered");
-        require(
-        ((block.timestamp - startTime) % 60 minutes) < predictionWindowDuration, 
-            "Prediction window is closed"
-        );
-        users[_userAddress].prediction = _prediction;
-
-        if (predictions[_prediction].userAddress == address(0)) {
-            predictions[_prediction] = Prediction({
-                predictionValue: _prediction,
-                userAddress: _userAddress
-            });
-            predictionValues.push(_prediction);
-        }
-
-        emit PredictionSubmitted(_userAddress, _prediction);
-    }
-
-    function awardWinners(uint256 _actualPrice) public onlyOwner {
-        require(
-            block.timestamp >= lastPredictionTime + predictionInterval,
-            "Prediction interval not reached"
-        );
-
-        require(predictionValues.length > 0, "No predictions submitted");
-
-        uint256[] memory absDiffs = new uint256[](predictionValues.length);
-        for (uint256 i = 0; i < predictionValues.length; i++) {
-            if (_actualPrice > predictionValues[i]) {
-                absDiffs[i] = _actualPrice - predictionValues[i];
-            } else {
-                absDiffs[i] = predictionValues[i] - _actualPrice;
+        
+        Round storage current = rounds[currentRound];
+        bool alreadyParticipating = false;
+        for (uint256 i = 0; i < current.participants.length; i++) {
+            if (current.participants[i] == participant) {
+                alreadyParticipating = true;
+                break;
             }
         }
-
-        uint256 firstMinIndex = findMinIndex(absDiffs);
-        uint256 firstMinPrediction = predictionValues[firstMinIndex];
-        address firstWinner = predictions[firstMinPrediction].userAddress;
-
-        uint256 secondMinIndex = findSecondMinIndex(absDiffs, firstMinIndex);
-        uint256 secondMinPrediction = predictionValues[secondMinIndex];
-        address secondWinner = predictions[secondMinPrediction].userAddress;
-
-        IERC20Metadata tokenMetadata = IERC20Metadata(address(rewardToken));
-
-        if (firstWinner != address(0)) {
-            rewardToken.transfer(
-                firstWinner,
-                100 * 10**tokenMetadata.decimals()
-            );
-            emit WinnerAwarded(firstWinner, 100 * 10**tokenMetadata.decimals());
+        if (!alreadyParticipating) {
+            current.participants.push(participant);
         }
-
-        if (secondWinner != address(0)) {
-            rewardToken.transfer(
-                secondWinner,
-                50 * 10**tokenMetadata.decimals()
-            );
-            emit WinnerAwarded(secondWinner, 50 * 10**tokenMetadata.decimals());
-        }
-
-        emit PredictionResult(_actualPrice, currentPredictionRound);
-
-        delete predictionValues;
-
-        lastPredictionTime = block.timestamp;
-        currentPredictionRound++;
+        
+        emit PredictionSubmitted(currentRound, participant, _predictedPrice);
     }
-
-    function findMinIndex(uint256[] memory arr)
-        internal
-        pure
-        returns (uint256)
-    {
-        uint256 minIndex = 0;
-        for (uint256 i = 1; i < arr.length; i++) {
-            if (arr[i] < arr[minIndex]) {
-                minIndex = i;
+    
+    function awardWinners(uint256 _actualPrice) external onlyOwner {
+        require(block.timestamp >= lastRoundStart + PREDICTION_DURATION + WAIT_DURATION, 
+                "Waiting period not over");
+        require(!rounds[currentRound].isRevealed, "Price already revealed");
+        
+        Round storage current = rounds[currentRound];
+        address winner = address(0);
+        uint256 minDifference = type(uint256).max;
+        
+        for (uint256 i = 0; i < current.participants.length; i++) {
+            address participant = current.participants[i];
+            uint256 predictedPrice = predictions[currentRound][participant].predictedPrice;
+            if (predictedPrice > 0) {
+                uint256 difference = _actualPrice > predictedPrice
+                    ? _actualPrice - predictedPrice
+                    : predictedPrice - _actualPrice;
+                if (difference < minDifference) {
+                    minDifference = difference;
+                    winner = participant;
+                }
             }
         }
-        return minIndex;
-    }
-
-    function findSecondMinIndex(uint256[] memory arr, uint256 firstMinIndex)
-        internal
-        pure
-        returns (uint256)
-    {
-        uint256 secondMinIndex = (firstMinIndex == 0) ? 1 : 0;
-        for (uint256 i = 0; i < arr.length; i++) {
-            if (i != firstMinIndex && arr[i] < arr[secondMinIndex]) {
-                secondMinIndex = i;
-            }
+        
+        current.actualPrice = _actualPrice;
+        current.isRevealed = true;
+        current.winner = winner;
+        current.winningDifference = minDifference;
+        
+        if (winner != address(0)) {
+            rewardToken.mint(winner, REWARD_AMOUNT); // Mint new tokens instead of transfer
         }
-        return secondMinIndex;
+        
+        emit PriceRevealed(currentRound, _actualPrice, winner);
+        
+        currentRound++;
+        lastRoundStart = block.timestamp;
+        rounds[currentRound].startTime = lastRoundStart;
+        emit RoundStarted(currentRound, lastRoundStart);
     }
-
-    function setPredictionWindowDuration(uint256 _durationMinutes) public onlyOwner {
-        predictionWindowDuration = _durationMinutes * 1 minutes;
+    
+    function isPredictionOpen() public view returns (bool) {
+        return block.timestamp < lastRoundStart + PREDICTION_DURATION;
     }
-
-    function setPredictionInterval(uint256 _intervalHours) public onlyOwner {
-        predictionInterval = _intervalHours * 1 hours;
+    
+    function getRoundStatus() public view returns (
+        uint256 roundNumber,
+        uint256 timeRemainingPrediction,
+        uint256 timeRemainingReveal,
+        bool revealed
+    ) {
+        roundNumber = currentRound;
+        revealed = rounds[currentRound].isRevealed;
+        
+        if (block.timestamp < lastRoundStart + PREDICTION_DURATION) {
+            timeRemainingPrediction = (lastRoundStart + PREDICTION_DURATION) - block.timestamp;
+            timeRemainingReveal = 0;
+        } else if (block.timestamp < lastRoundStart + ROUND_INTERVAL) {
+            timeRemainingPrediction = 0;
+            timeRemainingReveal = (lastRoundStart + ROUND_INTERVAL) - block.timestamp;
+        } else {
+            timeRemainingPrediction = 0;
+            timeRemainingReveal = 0;
+        }
     }
-
-    function getPredictionValues() public view returns (uint256[] memory) {
-        return predictionValues;
+    
+    function getParticipants(uint256 round) public view returns (address[] memory) {
+        return rounds[round].participants;
     }
-
-    function getPredictionWindowEnd() public view returns (uint256) {
-        return lastPredictionTime + predictionWindowDuration;
+    
+    function getParticipantCount(uint256 round) public view returns (uint256) {
+        return rounds[round].participants.length;
     }
 }

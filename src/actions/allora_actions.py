@@ -1,9 +1,10 @@
 import time 
+from dotenv import load_dotenv
 from src.action_handler import register_action
 from src.helpers import print_h_bar
 from src.prompts import POST_PROMPT, REPLY_PROMPT
 channel_id = "1337747758920237118"
-topic_id=1
+topic_id=13
 
 @register_action("get-inference")
 def get_inference(agent, **kwargs):

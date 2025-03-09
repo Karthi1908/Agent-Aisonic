@@ -6,7 +6,7 @@ from src.action_handler import register_action
 
 logger = logging.getLogger("actions.sonic_actions")
 channel_id = "1337747758920237118"
-topic_id=1
+topic_id=13
 
 # Note: These action handlers are currently simple passthroughs to the sonic_connection methods.
 # They serve as hook points where hackathon participants can add custom logic, validation,
@@ -85,7 +85,7 @@ def register_user(agent, **kwargs):
     """
     try:
         discord_id = kwargs.get("discord_id")
-        user_address = float(kwargs.get("user_address"))
+        user_address = kwargs.get("user_address")
 
         # Direct passthrough to connection method - add your logic before/after this call!
         agent.connection_manager.connections["sonic"].register_user(
@@ -104,13 +104,12 @@ def submit_prediction(agent, **kwargs):
     """
     try:
         prediction = kwargs.get("prediction")
-        user_address = float(kwargs.get("user_address"))
+        discord_id = kwargs.get("discord_id")
 
         # Direct passthrough to connection method - add your logic before/after this call!
         agent.connection_manager.connections["sonic"].submit_prediction(
-            
-            user_address=user_address,
-            prediction=prediction
+            prediction=prediction,
+            discord_id=discord_id
         )
         return
 
@@ -122,37 +121,38 @@ def submit_prediction(agent, **kwargs):
 def award_winners(agent, **kwargs):
     """Submit Eth Price predictions
     """
-    agent.logger.info("\n📝 GETTING NEW INFERENCE")
-    print_h_bar()
-    response= agent.connection_manager.perform_action(
-                connection_name="allora",
-                action_name="get-inference",
-                params=[topic_id]
-            )
+    try:
+        agent.logger.info("\n📝 GETTING NEW INFERENCE")
+        print_h_bar()
+        response= agent.connection_manager.perform_action(
+                    connection_name="allora",
+                    action_name="get-inference",
+                    params=[topic_id]
+                )
 
-    agent.logger.info(f"'{response}'")
-    print_h_bar()
-    agent.logger.info("\n📝 GENERATING NEW DISCORD POST")
-    print_h_bar()
+        agent.logger.info(f"'{response}'")
+        print_h_bar()
+        agent.logger.info("\n📝 GENERATING NEW DISCORD POST")
+        print_h_bar()
 
-    #prompt = POST_PROMPT.format(agent_name = agent.name)
-    prompt = response["inference"]
-    actual_price= round(float(prompt))
-    #post_text = agent.prompt_llm(prompt)
-    post_text = "Current Ethereum value is " + prompt
+        #prompt = POST_PROMPT.format(agent_name = agent.name)
+        prompt = response["inference"]
+        actual_price= round(float(prompt))
+        #post_text = agent.prompt_llm(prompt)
+        post_text = "Current Ethereum value is " + str(actual_price)
 
-    if post_text:
-        agent.logger.info("\n🚀 Posting to discord:")
-        agent.logger.info(f"'{post_text}'")
-        agent.connection_manager.perform_action(
+        if post_text:
+            agent.logger.info("\n🚀 Posting to discord:")
+            agent.logger.info(f"'{post_text}'")
+            agent.connection_manager.perform_action(
                 connection_name="discord",
                 action_name="post-message",
                 params=[channel_id, post_text]
             )
 
         agent.logger.info("\n✅ Discord post done successfully!")
-        return True
-    try:
+    
+   
         actual_price= round(float(prompt))
 
         # Direct passthrough to connection method - add your logic before/after this call!

@@ -134,21 +134,8 @@ PREDICTIONS_ABI = [
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
-				"name": "_actualPrice",
-				"type": "uint256"
-			}
-		],
-		"name": "awardWinners",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
 				"internalType": "address",
-				"name": "tokenAddress",
+				"name": "_rewardToken",
 				"type": "address"
 			}
 		],
@@ -200,34 +187,21 @@ PREDICTIONS_ABI = [
 		"anonymous": False,
 		"inputs": [
 			{
-				"indexed": False,
-				"internalType": "uint256",
-				"name": "actualPrice",
-				"type": "uint256"
-			},
-			{
-				"indexed": False,
+				"indexed": True,
 				"internalType": "uint256",
 				"name": "round",
 				"type": "uint256"
-			}
-		],
-		"name": "PredictionResult",
-		"type": "event"
-	},
-	{
-		"anonymous": False,
-		"inputs": [
+			},
 			{
 				"indexed": True,
 				"internalType": "address",
-				"name": "userAddress",
+				"name": "user",
 				"type": "address"
 			},
 			{
 				"indexed": False,
 				"internalType": "uint256",
-				"name": "prediction",
+				"name": "predictedPrice",
 				"type": "uint256"
 			}
 		],
@@ -235,86 +209,48 @@ PREDICTIONS_ABI = [
 		"type": "event"
 	},
 	{
+		"anonymous": False,
 		"inputs": [
 			{
+				"indexed": True,
 				"internalType": "uint256",
-				"name": "_discordId",
+				"name": "round",
 				"type": "uint256"
 			},
 			{
-				"internalType": "address",
-				"name": "_userAddress",
-				"type": "address"
-			}
-		],
-		"name": "registerUser",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "renounceOwnership",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
+				"indexed": False,
 				"internalType": "uint256",
-				"name": "_intervalHours",
+				"name": "actualPrice",
 				"type": "uint256"
-			}
-		],
-		"name": "setPredictionInterval",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_durationMinutes",
-				"type": "uint256"
-			}
-		],
-		"name": "setPredictionWindowDuration",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "_userAddress",
-				"type": "address"
 			},
 			{
-				"internalType": "uint256",
-				"name": "_prediction",
-				"type": "uint256"
-			}
-		],
-		"name": "submitPrediction",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
+				"indexed": False,
 				"internalType": "address",
-				"name": "newOwner",
+				"name": "winner",
 				"type": "address"
 			}
 		],
-		"name": "transferOwnership",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
+		"name": "PriceRevealed",
+		"type": "event"
+	},
+	{
+		"anonymous": False,
+		"inputs": [
+			{
+				"indexed": True,
+				"internalType": "uint256",
+				"name": "round",
+				"type": "uint256"
+			},
+			{
+				"indexed": False,
+				"internalType": "uint256",
+				"name": "startTime",
+				"type": "uint256"
+			}
+		],
+		"name": "RoundStarted",
+		"type": "event"
 	},
 	{
 		"anonymous": False,
@@ -322,46 +258,196 @@ PREDICTIONS_ABI = [
 			{
 				"indexed": True,
 				"internalType": "address",
-				"name": "userAddress",
+				"name": "user",
 				"type": "address"
 			},
 			{
 				"indexed": False,
-				"internalType": "uint256",
+				"internalType": "string",
 				"name": "discordId",
-				"type": "uint256"
+				"type": "string"
 			}
 		],
 		"name": "UserRegistered",
 		"type": "event"
 	},
 	{
-		"anonymous": False,
+		"inputs": [],
+		"name": "PREDICTION_DURATION",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "REWARD_AMOUNT",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "ROUND_INTERVAL",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "WAIT_DURATION",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
-				"indexed": True,
 				"internalType": "address",
-				"name": "winnerAddress",
+				"name": "",
 				"type": "address"
+			}
+		],
+		"name": "addressToDiscord",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_actualPrice",
+				"type": "uint256"
+			}
+		],
+		"name": "awardWinners",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "currentRound",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"name": "discordToAddress",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "round",
+				"type": "uint256"
+			}
+		],
+		"name": "getParticipantCount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "round",
+				"type": "uint256"
+			}
+		],
+		"name": "getParticipants",
+		"outputs": [
+			{
+				"internalType": "address[]",
+				"name": "",
+				"type": "address[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getRoundStatus",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "roundNumber",
+				"type": "uint256"
 			},
 			{
-				"indexed": False,
 				"internalType": "uint256",
-				"name": "amount",
+				"name": "timeRemainingPrediction",
 				"type": "uint256"
-			}
-		],
-		"name": "WinnerAwarded",
-		"type": "event"
-	},
-	{
-		"inputs": [],
-		"name": "currentPredictionRound",
-		"outputs": [
+			},
 			{
 				"internalType": "uint256",
-				"name": "",
+				"name": "timeRemainingReveal",
 				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "revealed",
+				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
@@ -369,12 +455,12 @@ PREDICTIONS_ABI = [
 	},
 	{
 		"inputs": [],
-		"name": "getPredictionValues",
+		"name": "isPredictionOpen",
 		"outputs": [
 			{
-				"internalType": "uint256[]",
+				"internalType": "bool",
 				"name": "",
-				"type": "uint256[]"
+				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
@@ -382,20 +468,7 @@ PREDICTIONS_ABI = [
 	},
 	{
 		"inputs": [],
-		"name": "getPredictionWindowEnd",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "lastPredictionTime",
+		"name": "lastRoundStart",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -420,37 +493,34 @@ PREDICTIONS_ABI = [
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "predictionInterval",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
 		"inputs": [
 			{
 				"internalType": "uint256",
 				"name": "",
 				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
 			}
 		],
 		"name": "predictions",
 		"outputs": [
 			{
 				"internalType": "uint256",
-				"name": "predictionValue",
+				"name": "predictedPrice",
 				"type": "uint256"
 			},
 			{
-				"internalType": "address",
-				"name": "userAddress",
-				"type": "address"
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "discordId",
+				"type": "string"
 			}
 		],
 		"stateMutability": "view",
@@ -459,33 +529,26 @@ PREDICTIONS_ABI = [
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "predictionValues",
-		"outputs": [
+				"internalType": "address",
+				"name": "_user",
+				"type": "address"
+			},
 			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
+				"internalType": "string",
+				"name": "_discordId",
+				"type": "string"
 			}
 		],
-		"stateMutability": "view",
+		"name": "registerUser",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
 		"inputs": [],
-		"name": "predictionWindowDuration",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -493,7 +556,7 @@ PREDICTIONS_ABI = [
 		"name": "rewardToken",
 		"outputs": [
 			{
-				"internalType": "contract IERC20",
+				"internalType": "contract PredictionToken",
 				"name": "",
 				"type": "address"
 			}
@@ -502,12 +565,38 @@ PREDICTIONS_ABI = [
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "startTime",
-		"outputs": [
+		"inputs": [
 			{
 				"internalType": "uint256",
 				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "rounds",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "startTime",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "actualPrice",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "isRevealed",
+				"type": "bool"
+			},
+			{
+				"internalType": "address",
+				"name": "winner",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "winningDifference",
 				"type": "uint256"
 			}
 		],
@@ -517,30 +606,32 @@ PREDICTIONS_ABI = [
 	{
 		"inputs": [
 			{
+				"internalType": "uint256",
+				"name": "_predictedPrice",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "_discordId",
+				"type": "string"
+			}
+		],
+		"name": "submitPrediction",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
 				"internalType": "address",
-				"name": "",
+				"name": "newOwner",
 				"type": "address"
 			}
 		],
-		"name": "users",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "prediction",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "discordId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bool",
-				"name": "registered",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	}
 ]
